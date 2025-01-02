@@ -2,30 +2,31 @@
 #include <OneButton.h>
 #include <SimpleKalmanFilter.h>
 #include "TLx493D_inc.hpp"
+#include "parameters.h"
 
 using namespace ifx::tlx493d;
 
-const uint8_t POWER_PIN = 15;
+const uint8_t POWER_PIN = QT_POWER_PIN;
 TLx493D_A1B6 mag(Wire1, TLx493D_IIC_ADDR_A0_e);
 
 SimpleKalmanFilter xFilter(1, 1, 0.2), yFilter(1, 1, 0.2), zFilter(1, 1, 0.2);
 
 // Setup buttons
-OneButton button1(27, true);
-OneButton button2(24, true);
+OneButton button1(BUTTON1_GPIO, true);
+OneButton button2(BUTTON2_GPIO, true);
 
 double xOffset = 0, yOffset = 0, zOffset = 0;
 double xRaw=0, yRaw = 0, zRaw = 0;
 double xCurrent = 0, yCurrent = 0, zCurrent = 0;
 
-int calSamples = 300;
-int sensivity = 8;
-int magRange = 3;
+int calSamples = CALIBRATION_SAMPLES;
+int sensitivity = SENSITIVITY;
+int magRange = MAG_RANGE;
 int outRange = 127;       // Max allowed in HID report
-double xyThreshold = 0.5;  // Center threshold
+double xyThreshold = XY_THRESHOLD;
 
-int inRange = magRange * sensivity;
-double zThreshold = xyThreshold * 1.5;
+int inRange = magRange * sensitivity;
+double zThreshold = xyThreshold * Z_FACTOR;
 
 bool isOrbit = false;
 
