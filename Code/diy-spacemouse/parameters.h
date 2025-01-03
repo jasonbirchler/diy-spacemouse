@@ -8,4 +8,4 @@
 #define XY_THRESHOLD 0.5  // Center threshold. i.e. how far from 0,0 is considered center
 #define MAG_RANGE 3
 #define SENSITIVITY 8
-#define Z_FACTOR 1.3 // zThreshold = XY_THRESHOLD * Z_FACTOR
+#define Z_FACTOR 1.6 // zThreshold = XY_THRESHOLD * Z_FACTOR

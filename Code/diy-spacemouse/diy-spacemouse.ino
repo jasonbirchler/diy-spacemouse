@@ -28,7 +28,16 @@ double xyThreshold = XY_THRESHOLD;
 int inRange = magRange * sensitivity;
 double zThreshold = xyThreshold * Z_FACTOR;
 
-bool isOrbit = false;
+// bool isOrbit = false;
+// bool isPan = false;
+
+enum Motion {
+  MOVE,
+  ORBIT,
+  PAN
+};
+
+int currentState = MOVE;
 
 void setup() {
 
@@ -42,7 +51,7 @@ void setup() {
   Mouse.begin();
   Keyboard.begin();
 
-  Serial.begin(115200);
+  Serial.begin(9600);
   Wire1.begin();
 
   // mag sensor init
@@ -79,13 +88,6 @@ void loop() {
 
   // get the mag data
   mag.getMagneticField(&xRaw, &yRaw, &zRaw);
-  // Serial.print("raw X: ");
-  // Serial.println(xRaw);
-  // Serial.print("raw Y: ");
-  // Serial.println(yRaw);
-  // Serial.print("raw Z: ");
-  // Serial.println(zRaw);
-  // Serial.println();
 
   // update the filters
   xCurrent = xFilter.updateEstimate(xRaw - xOffset);
@@ -95,6 +97,15 @@ void loop() {
   // check the center threshold
   if (abs(xCurrent) > xyThreshold || abs(yCurrent) > xyThreshold) {
 
+    switch (currentState) {
+      case MOVE:
+        Keyboard.releaseAll();
+      case ORBIT:
+        Keyboard.release(KEY_LEFT_SHIFT);
+      case PAN:
+        Keyboard.release(KEY_LEFT_ALT);
+    }
+
     int xMove = 0;
     int yMove = 0;
 
@@ -102,29 +113,26 @@ void loop() {
     xMove = map(yCurrent, inRange, -inRange, -outRange, outRange);
     yMove = map(xCurrent, -inRange, inRange, -outRange, outRange);
 
-    // press shift to orbit in Fusion 360 if the pan threshold is not crossed (zAxis)
-    if (abs(zCurrent) < zThreshold && !isOrbit) {
-      Mouse.press(MOUSE_LEFT);
-      isOrbit = true;
+    // orbit and panning
+    if (abs(zCurrent) < zThreshold) { // if below the threshold, orbit
+      Keyboard.press(KEY_LEFT_ALT);
+      currentState = ORBIT;
+    } else { // if over threshold, pan
+      Keyboard.press(KEY_LEFT_SHIFT);
+      currentState = PAN;
     }
 
-    // pan or orbit by holding shift and moving propotionaly to the xy axis
-    Keyboard.press(KEY_LEFT_SHIFT);
+    // move the cursor
     Mouse.move(yMove, xMove, 0);
   } else {
 
     // release the mouse and keyboard if within the center threshold
     Mouse.release(MOUSE_LEFT);
+    Mouse.release(MOUSE_RIGHT);
+    Mouse.release(MOUSE_MIDDLE);
     Keyboard.releaseAll();
-    isOrbit = false;
+    currentState = MOVE;
   }
-
-  Serial.print(xCurrent);
-  Serial.print(",");
-  Serial.print(yCurrent);
-  Serial.print(",");
-  Serial.print(zCurrent);
-  Serial.println();
 }
 
 // go to home view in FreeCAD by pressing HOME
